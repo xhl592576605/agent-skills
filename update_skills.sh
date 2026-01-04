@@ -6,7 +6,7 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLAUDE_DIR="$HOME/.claude"
 CODEX_DIR="$HOME/.codex"
 REPO_URL="git@github.com:xhl592576605/agent-skills.git"
-CONTENT_BLOCK="\n## agent-skills\n\n<EXTREMELY_IMPORTANT>\n已安装 agent-skills 技能库。请从以下目录加载技能：\n- Claude: ~/.claude/agent-skills/skills\n- Codex: ~/.codex/agent-skills/skills\n</EXTREMELY_IMPORTANT>\n"
+TMP_DIR="/tmp/agent-skills"
 
 log_info() {
     echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S') - $1"
@@ -31,69 +31,74 @@ check_dependencies() {
     log_success "系统依赖检查通过"
 }
 
-clone_repository() {
-    local target_dir="$1"
+# 克隆到临时目录并复制技能
+clone_and_copy() {
+    local target_skills_dir="$1"
     local platform_name="$2"
 
-    log_info "开始克隆仓库到 $platform_name 目录..."
+    log_info "开始下载 $platform_name 技能..."
 
-    if [ ! -d "$target_dir" ]; then
-        log_info "创建 $platform_name 目录: $target_dir"
-        mkdir -p "$target_dir"
-    fi
+    # 清理并创建临时目录
+    rm -rf "$TMP_DIR"
+    mkdir -p "$TMP_DIR"
+    cd "$TMP_DIR"
 
-    cd "$target_dir"
-
-    if [ -d "agent-skills" ]; then
-        log_info "检测到 $platform_name/agent-skills 已存在，执行拉取更新..."
-        cd "agent-skills"
-        if git pull origin main 2>/dev/null || git pull origin master 2>/dev/null; then
-            log_success "$platform_name/agent-skills 更新成功"
-        else
-            log_error "$platform_name/agent-skills 更新失败"
-            exit 1
-        fi
+    # 克隆仓库
+    if git clone "$REPO_URL" .; then
+        log_success "仓库克隆成功"
     else
-        log_info "克隆仓库到 $target_dir/agent-skills..."
-        if git clone "$REPO_URL" agent-skills; then
-            log_success "$platform_name/agent-skills 克隆成功"
-        else
-            log_error "$platform_name/agent-skills 克隆失败"
-            exit 1
-        fi
+        log_error "仓库克隆失败"
+        rm -rf "$TMP_DIR"
+        exit 1
     fi
 
-    cd "$PROJECT_ROOT"
+    # 创建目标技能目录
+    if [ ! -d "$target_skills_dir" ]; then
+        log_info "创建 $platform_name 技能目录: $target_skills_dir"
+        mkdir -p "$target_skills_dir"
+    fi
+
+    # 复制 skills 目录内容
+    if cp -r skills/* "$target_skills_dir"/ 2>/dev/null || cp -r . "$target_skills_dir"/ 2>/dev/null; then
+        log_success "技能复制成功"
+    else
+        log_error "技能复制失败"
+        rm -rf "$TMP_DIR"
+        exit 1
+    fi
+
+    # 清理临时目录
+    rm -rf "$TMP_DIR"
+    log_info "临时目录已清理"
 }
 
-add_content_to_file() {
-    local file_path="$1"
+update_config_file() {
+    local config_file="$1"
     local platform_name="$2"
-    local content_block
+    local skills_dir="$3"
 
-    case "$platform_name" in
-        Claude)
-            content_block="\n## agent-skills\n\n<EXTREMELY_IMPORTANT>\nagent-skills library is installed. Please load skills from the following directory:\n- Claude: ~/.claude/agent-skills/skills\n</EXTREMELY_IMPORTANT>\n"
-            ;;
-        Codex)
-            content_block="\n## agent-skills\n\n<EXTREMELY_IMPORTANT>\nagent-skills library is installed. Please load skills from the following directory:\n- Codex: ~/.codex/agent-skills/skills\n</EXTREMELY_IMPORTANT>\n"
-            ;;
-    esac
+    log_info "更新 $platform_name 配置文件: $config_file"
 
-    log_info "编辑 $platform_name 配置文件: $file_path"
-
-    if [ ! -f "$file_path" ]; then
-        log_info "文件不存在，创建新文件: $file_path"
-        touch "$file_path"
+    if [ ! -f "$config_file" ]; then
+        log_info "文件不存在，创建新文件: $config_file"
+        touch "$config_file"
     fi
 
-    if grep -q "agent-skills" "$file_path"; then
+    if grep -q "agent-skills" "$config_file" 2>/dev/null; then
         log_info "文件中已包含 agent-skills 内容块，跳过添加"
-        return
+        return 0
     fi
 
-    log_info "添加内容块到 $file_path"
-    echo -e "$content_block" >> "$file_path"
+    local content_block="
+## agent-skills
+
+<EXTREMELY_IMPORTANT>
+agent-skills library is installed. Please load skills from the following directory:
+- $platform_name: $skills_dir
+</EXTREMELY_IMPORTANT>
+"
+
+    echo -e "$content_block" >> "$config_file"
 
     if [ $? -eq 0 ]; then
         log_success "$platform_name 配置文件更新成功"
@@ -103,55 +108,40 @@ add_content_to_file() {
     fi
 }
 
-verify_file_modification() {
-    local file_path="$1"
-    local platform_name="$2"
-
-    log_info "验证 $platform_name 配置文件..."
-
-    if [ ! -f "$file_path" ]; then
-        log_error "$platform_name 配置文件不存在: $file_path"
-        exit 1
-    fi
-
-    if grep -q "agent-skills" "$file_path"; then
-        log_success "$platform_name 配置文件验证通过，包含 agent-skills 内容块"
-    else
-        log_error "$platform_name 配置文件验证失败，未找到 agent-skills 内容块"
-        exit 1
-    fi
-}
-
 show_usage() {
     echo "使用方法: $0 [选项]"
     echo ""
     echo "选项:"
-    echo "  claude    仅更新 Claude 技能"
-    echo "  codex     仅更新 Codex 技能"
-    echo "  all       更新 Claude 和 Codex 技能（默认）"
+    echo "  claude    仅安装 Claude 技能"
+    echo "  codex     仅安装 Codex 技能"
+    echo "  all       安装所有技能（默认）"
     echo "  -h, --help 显示帮助信息"
     echo ""
     echo "示例:"
-    echo "  $0 claude   # 仅更新 Claude"
-    echo "  $0 codex    # 仅更新 Codex"
-    echo "  $0 all      # 更新两者"
-    echo "  $0          # 更新两者（默认）"
+    echo "  $0 claude   # 仅安装 Claude"
+    echo "  $0 codex    # 仅安装 Codex"
+    echo "  $0 all      # 安装所有"
 }
 
 process_platform() {
     local platform="$1"
-    local target_dir
+
+    local target_skills_dir
     local config_file
+    local skills_dir
+    local platform_name
 
     case "$platform" in
         claude|Claude|CLAUDE)
-            target_dir="$CLAUDE_DIR"
+            target_skills_dir="$CLAUDE_DIR/agent-skills/skills"
             config_file="$CLAUDE_DIR/CLAUDE.md"
+            skills_dir="$CLAUDE_DIR/agent-skills/skills"
             platform_name="Claude"
             ;;
         codex|Codex|CODEX)
-            target_dir="$CODEX_DIR"
+            target_skills_dir="$CODEX_DIR/agent-skills/skills"
             config_file="$CODEX_DIR/AGENTS.md"
+            skills_dir="$CODEX_DIR/agent-skills/skills"
             platform_name="Codex"
             ;;
         *)
@@ -160,9 +150,16 @@ process_platform() {
             ;;
     esac
 
-    clone_repository "$target_dir" "$platform_name"
-    add_content_to_file "$config_file" "$platform_name"
-    verify_file_modification "$config_file" "$platform_name"
+    log_info "========================================="
+    log_info "开始安装 $platform_name 技能"
+    log_info "========================================="
+
+    clone_and_copy "$target_skills_dir" "$platform_name"
+    update_config_file "$config_file" "$platform_name" "$skills_dir"
+
+    log_info "========================================="
+    log_success "$platform_name 技能安装完成"
+    log_info "========================================="
 }
 
 main() {
@@ -174,30 +171,15 @@ main() {
             exit 0
             ;;
         claude|Claude|CLAUDE)
-            log_info "========================================="
-            log_info "开始更新 Claude 技能"
-            log_info "========================================="
             check_dependencies
-            log_info "导航到项目目录: $PROJECT_ROOT"
-            cd "$PROJECT_ROOT"
             process_platform "claude"
             ;;
         codex|Codex|CODEX)
-            log_info "========================================="
-            log_info "开始更新 Codex 技能"
-            log_info "========================================="
             check_dependencies
-            log_info "导航到项目目录: $PROJECT_ROOT"
-            cd "$PROJECT_ROOT"
             process_platform "codex"
             ;;
         all|ALL)
-            log_info "========================================="
-            log_info "开始更新 Claude 和 Codex 技能"
-            log_info "========================================="
             check_dependencies
-            log_info "导航到项目目录: $PROJECT_ROOT"
-            cd "$PROJECT_ROOT"
             process_platform "claude"
             process_platform "codex"
             ;;
@@ -215,18 +197,14 @@ main() {
 
     case "$platform" in
         claude|Claude|CLAUDE)
-            log_info "Claude 技能目录: $CLAUDE_DIR/agent-skills"
-            log_info "Claude 配置文件: $CLAUDE_DIR/CLAUDE.md"
+            log_info "Claude 技能目录: $CLAUDE_DIR/agent-skills/skills"
             ;;
         codex|Codex|CODEX)
-            log_info "Codex 技能目录: $CODEX_DIR/agent-skills"
-            log_info "Codex 配置文件: $CODEX_DIR/AGENTS.md"
+            log_info "Codex 技能目录: $CODEX_DIR/agent-skills/skills"
             ;;
         all|ALL)
-            log_info "Claude 技能目录: $CLAUDE_DIR/agent-skills"
-            log_info "Codex 技能目录: $CODEX_DIR/agent-skills"
-            log_info "Claude 配置文件: $CLAUDE_DIR/CLAUDE.md"
-            log_info "Codex 配置文件: $CODEX_DIR/AGENTS.md"
+            log_info "Claude 技能目录: $CLAUDE_DIR/agent-skills/skills"
+            log_info "Codex 技能目录: $CODEX_DIR/agent-skills/skills"
             ;;
     esac
 }
