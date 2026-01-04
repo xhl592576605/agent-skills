@@ -133,15 +133,15 @@ process_platform() {
 
     case "$platform" in
         claude|Claude|CLAUDE)
-            target_skills_dir="$CLAUDE_DIR/agent-skills/skills"
+            target_skills_dir="$PROJECT_ROOT/.claude/skills"
             config_file="$CLAUDE_DIR/CLAUDE.md"
-            skills_dir="$CLAUDE_DIR/agent-skills/skills"
+            skills_dir="$PROJECT_ROOT/.claude/skills"
             platform_name="Claude"
             ;;
         codex|Codex|CODEX)
-            target_skills_dir="$CODEX_DIR/agent-skills/skills"
+            target_skills_dir="$PROJECT_ROOT/.codex/skills"
             config_file="$CODEX_DIR/AGENTS.md"
-            skills_dir="$CODEX_DIR/agent-skills/skills"
+            skills_dir="$PROJECT_ROOT/.codex/skills"
             platform_name="Codex"
             ;;
         *)
