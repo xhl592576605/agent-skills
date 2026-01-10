@@ -11,7 +11,7 @@ description: Use when a user requests architecture design based on PRD/DESIGN_SP
 
 **开始前必须向用户提问并等待回答：功能/模块名称是什么？(可根据前文的上下文确定)**
 **执行根据功能/模块名称，确认：PRD 与 DESIGN_SPEC 的路径是否存在且内容已准备好。**
-**如若不理解需求，必须针对每个功能点或页面逐项提问并等待回答，以确保理解需求与设计细节。**
+**执行技能时必须使用"supsuperpowers:brainstorm"进行追问更多相关点，直到完全理解需求与设计细节。。（如果没有“supsuperpowers:brainstorm”，则必须使用AskUserQuestion工具等方式追问更多相关点，直到完全理解需求与设计细节。。）**
 **必须识别关键功能点，并为其指派对应专家技能协作完成（前端 / 后端 / 多平台）。**
 **执行技能时必须持续追问直到需求、范围、约束清晰。**
 
