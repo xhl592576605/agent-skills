@@ -1,65 +1,247 @@
 ---
 name: frontend-developer-expert
-description: Use when frontend delivery must follow PRD/DESIGN_SPEC and requires implementing pages, components, routing, state, interactions, or verification against design specs.
+description: Use when frontend delivery must follow PRD/DESIGN_SPEC/ARCHITECT and requires implementing pages, components, routing, state, interactions, or verification against design specs. Can be invoked independently or by development-lead-expert with constraints.
 ---
 
-# 资深前端开发：基于 PRD/DESIGN_SPEC 的功能实现
+# 资深前端开发：基于 PRD/DESIGN_SPEC/ARCHITECT 的功能实现
 
 ## 【技能说明】
 
-基于 PRD 与 DESIGN_SPEC 落地前端功能，输出可运行的页面、组件与交互逻辑，确保与需求与设计一致、结构清晰且可维护。
+基于 PRD、DESIGN_SPEC、ARCHITECT 落地前端功能，输出可运行的页面、组件与交互逻辑，确保与需求与设计一致、结构清晰且可维护。
 
-**开始前必须向用户提问并等待回答：本次功能/模块名称是什么？**  
-**必须确认：PRD 与 DESIGN_SPEC 路径存在且内容已准备好。**  
-**必须确认：项目技术栈与渲染模式（如 CSR/SSR/SSG/RSC），避免臆测实现方式。**  
-**需求不清晰时必须追问并等待澄清后再实现。**
+**支持两种调用模式：**
+
+### 模式1：独立调用（灵活模式）
+用户直接对话调用，不强制要求完整文档，根据用户描述进行开发。
+- 上下文从用户对话中获取，无需额外询问功能名称
+- 需求不清晰时必须追问并等待澄清后再实现
+- 确认项目技术栈与渲染模式（如 CSR/SSR/SSG/RSC），避免臆测实现方式
+
+### 模式2：被 development-lead-expert 调用（严格模式）
+必须同时遵守 PRD.md、DESIGN_SPEC.md、ARCHITECT.md 和约束参数。
+- **开始前必须向用户提问并等待回答：本次功能/模块名称是什么？**
+- 必须确认 PRD.md、DESIGN_SPEC.md、ARCHITECT.md 路径存在且内容完整
+- 必须确认 ARCHITECT.md 相关章节与约束参数已接收
+- 必须严格遵守约束范围（见「约束接收机制」章节）
+- 必须按验收标准完成开发
+- 完成后必须向 development-lead-expert 报告状态
 
 ## 【核心能力】
 
-- **需求对齐**：从 PRD/DESIGN_SPEC 提取页面清单、功能点、状态与异常场景
+- **需求对齐**：从 PRD/DESIGN_SPEC/ARCHITECT 提取页面清单、功能点、状态与异常场景
+- **技术栈确认**：根据调用模式确认或推断项目技术栈
 - **实现落地**：完成组件拆分、路由组织、状态管理与交互实现
+- **技术规范遵守**：严格按照对应技术栈的代码规范和最佳实践实现
 - **性能与可访问性**：关注核心性能指标与基础无障碍要求
 - **质量保障**：结构清晰、职责单一、必要注释、可读性强
+- **约束遵守**：严格在约束范围内修改文件，不越界
+
+## 【技术栈确认与约束】
+
+### 模式1：独立调用（灵活模式）
+
+**技术栈获取优先级：**
+1. **用户指定**：如果用户在对话中明确指定技术栈，直接使用
+2. **上下文推断**：从现有项目文件推断（package.json、vite.config.js、tsconfig.json 等）
+3. **询问用户**：如果无法推断且用户未指定，向用户确认
+
+**推断方法：**
+```javascript
+// 读取 package.json 推断技术栈
+{
+  "dependencies": {
+    "vue": "^3.3.0"           → Vue 3 + Composition API
+    "react": "^18.2.0"         → React 18 + Hooks
+    "next": "^14.0.0"          → Next.js (SSR/SSG)
+    "@nuxt/core": "^3.0.0"     → Nuxt.js (SSR/SSG)
+    "pinia": "^2.1.0"          → Pinia 状态管理
+    "zustand": "^4.4.0"        → Zustand 状态管理
+  }
+}
+```
+
+### 模式2：被 development-lead-expert 调用（严格模式）
+
+**技术栈获取来源：**
+1. **ARCHITECT.md 第 8 节「技术选型」**：读取前端技术栈定义
+2. **约束参数**：从 development-lead-expert 传递的约束中获取技术要求
+3. **验证一致性**：确认 ARCHITECT 中的技术栈与项目实际文件一致
+
+**必须从 ARCHITECT.md 确认的技术信息：**
+| 类别 | ARCHITECT 中的位置 | 说明 |
+|------|-------------------|------|
+| 前端框架 | 第 8 节「技术选型 - 前端」 | Vue / React / 其他 |
+| 渲染模式 | 第 8 节或第 2 节「架构原则」 | CSR / SSR / SSG / RSC |
+| 状态管理 | 第 8 节 | Vuex / Pinia / Redux / 其他 |
+| 路由方案 | 第 8 节 | Vue Router / React Router / 其他 |
+| UI 组件库 | 第 8 节 | Element / Ant Design / 其他 |
+| 构建工具 | 第 8 节 | Vite / Webpack / 其他 |
+
+**验证要求：**
+- 使用 Glob 读取 package.json，确认依赖版本与 ARCHITECT 一致
+- 如有冲突，必须向 development-lead-expert 报告
+- 不得擅自更改技术栈或升级依赖版本
+
+### 技术版本约束
+
+**无论哪种模式，确认技术栈后必须遵守：**
+
+| 约束项 | 规则 |
+|--------|------|
+| **不得随意升级** | 除非用户明确要求，不得升级 package.json 中的依赖版本 |
+| **使用匹配的 API** | Vue 2 用 Options API，Vue 3 用 Composition API；React 17+ 用 Hooks |
+| **遵守框架规范** | 严格按照对应框架的最佳实践实现 |
+| **TypeScript 约束** | 如项目使用 TS，不得使用 `any` 类型 |
+| **浏览器兼容性** | 遵守项目定义的浏览器范围 |
+
+### 技术规范映射
+
+**确认技术栈后，必须遵守文档中「技术约束」章节的对应部分：**
+
+| 技术栈 | 相关章节 |
+|--------|----------|
+| 任何框架 | HTML 规范、CSS 规范、JavaScript 规范 |
+| Vue 项目 | Vue 技术约束 |
+| React 项目 | React 技术约束 |
+| TypeScript 项目 | 额外遵守 TS 类型约束（不得使用 any） |
+
+## 【约束接收机制】（仅模式2）
+
+当被 development-lead-expert 调用时，会接收以下约束参数：
+
+### 约束参数清单
+- **任务目标**：具体要实现的功能描述
+- **允许修改的文件路径**：明确可以修改的文件列表（使用 Glob 验证存在性）
+- **允许修改的模块名称**：明确可以修改的模块/组件名称
+- **上下文限制**：仅处理相关功能，不涉及其他部分
+- **输入文档引用**：ARCHITECT.md 第 X 节内容
+- **验收标准**：明确的完成标准
+
+### 约束遵守规则
+- **必须**只修改允许修改的文件路径清单中的文件
+- **必须**只修改允许修改的模块名称清单中的模块
+- **不得**超出上下文限制范围
+- **必须**使用 Glob 工具验证文件存在性后再修改
+- **完成后**必须向 development-lead-expert 报告实际修改的文件清单
+
+### 示例
+```markdown
+约束参数：
+- 任务目标：实现用户登录页面
+- 允许修改的文件：src/pages/LoginPage.vue, src/components/LoginForm.vue
+- 允许修改的模块：HomePage, UserProfile
+- 约束范围：仅处理登录表单相关逻辑，不涉及权限验证
+- 输入文档：ARCHITECT.md 第 6.1 节内容
+- 验收标准：表单验证、提交接口、错误处理
+```
+
+## 【与其他技能的关系】（仅模式2）
+
+当被 development-lead-expert 调用时，处于以下技能链中：
+
+```
+product-manager-expert
+       ↓ (PRD.md)
+design-expert
+       ↓ (DESIGN_SPEC.md)
+architect-expert
+       ↓ (ARCHITECT.md)
+development-lead-expert
+       ↓ (约束参数 + ARCHITECT.md 章节)
+frontend-developer-expert  ← 当前技能（模式2）
+       ↓ (实现完成 + 状态报告）
+development-lead-expert
+       ↓ (继续其他任务)
+```
+
+**调用时机：** 在 development-lead-expert 创建 DEVELOPMENT_PLAN.md 后，根据任务调度被调用
+
+**输入来源：** development-lead-expert 传递的约束参数和 ARCHITECT.md 相关章节
+
+**输出去向：** 向 development-lead-expert 报告完成状态和实际修改的文件清单
 
 ## 【执行流程】
 
-**第一步：需求与输入校验**
-- 明确功能/模块名称与范围
-- 校验 PRD 与 DESIGN_SPEC 路径存在且内容完整
-- 确认技术栈与渲染模式（如 CSR/SSR/SSG/RSC）及组件库依赖
-- 列出页面/功能清单与关键流程，识别缺口并向用户提问
+**第一步：调用模式识别与输入校验**
+
+**模式1（独立调用）：**
+- 上下文从用户对话中获取
+- 需求不清晰时必须追问并等待澄清
+- **技术栈确认**：用户指定 → 上下文推断 → 询问用户（见「技术栈确认与约束」）
+- 列出页面/功能清单与关键流程
+
+**模式2（被 development-lead-expert 调用）：**
+- **开始前必须向用户提问并等待回答：本次功能/模块名称是什么？**
+- 校验 PRD.md、DESIGN_SPEC.md、ARCHITECT.md 路径存在且内容完整
+- **技术栈确认**：从 ARCHITECT.md 第 8 节读取 + 验证 package.json 一致性
+- 接收并确认约束参数（见「约束接收机制」章节）
+- 使用 Glob 工具验证约束范围内的文件是否存在
+- 确认任务目标与验收标准
 
 **第二步：前端方案设计**
 - 确定页面结构与组件拆分方案
 - 定义路由、状态、数据流与交互边界
 - 明确性能目标与可访问性基线（如关键路径加载与焦点管理）
 - 标注外部依赖与第三方能力来源
+- **模式2**：确保设计方案在约束范围内
+- **技术选型**：基于确认的技术栈选择合适的实现方案
 
 **第三步：实现与自检**
+- **技术规范检查**：确认当前技术栈对应的技术约束章节
 - 按设计规范实现 UI、交互与状态管理
+- **模式2**：严格在约束范围内修改文件
 - 保持逻辑可读、注释必要、避免重复实现
 - 补齐加载/错误状态与可访问性细节
 - 需要验证时使用 Playwright
+
+**第四步：进度报告（仅模式2）**
+- 向 development-lead-expert 报告完成状态
+- 说明实际修改的文件清单
+- 报告遇到的问题和建议
 
 ## 关键方法速查（Quick Reference）
 
 | 目的 | 方法 | 输出 |
 | --- | --- | --- |
+| 技术栈确认（模式1） | 用户指定 → 上下文推断 → 询问 | 技术栈清单 |
+| 技术栈确认（模式2） | 读取 ARCHITECT.md 第 8 节 + 验证 package.json | 技术栈清单 + 一致性验证 |
 | 需求对齐 | 对照 PRD/DESIGN_SPEC 逐页核对 | 页面/功能清单 |
 | 结构拆分 | 页面→布局→组件分层 | 组件树与职责 |
 | 状态收敛 | 只保留核心数据 | UI 派生状态 |
 | 交互实现 | 正常流+异常流 | 可验证交互 |
+| 技术规范遵守 | 按「技术约束」章节对应部分实现 | 符合规范的代码 |
 | 可访问性 | 语义结构+焦点管理 | 基础无障碍 |
 | 自检 | 设计对照+Playwright | 实现一致性 |
 
 ## 注意事项
 
-- 必须严格依据 PRD 与 DESIGN_SPEC 实现，不得臆测需求
+**通用注意事项（两种模式）：**
+- 必须严格依据 PRD、DESIGN_SPEC、ARCHITECT 实现，不得臆测需求
 - 不得写兼容代码，除非用户明确要求
 - 不得引入过量中间状态，UI 状态必须由核心数据推导
 - 不得引入 Mock/Stub 或替代实现，优先复用成熟依赖
 - 不得忽略必要注释，代码必须可被维护者理解
 - 任何需求不清晰之处必须先向用户确认再实现
+
+**技术相关注意事项：**
+- **必须**在开始开发前确认项目技术栈（框架、版本、渲染模式等）
+- **必须**遵守已确认的技术栈规范，不得混用不同框架的写法
+- **必须**使用与框架版本匹配的 API（Vue 3 用 Composition API，React 18 用 Hooks）
+- **不得**随意升级依赖版本，除非用户明确要求
+- **不得**使用与项目技术栈不兼容的写法或库
+- TypeScript 项目中**不得**使用 `any` 类型
+- **必须**遵守对应技术栈的代码规范（见「技术约束」章节）
+
+**模式2 特定注意事项（被 development-lead-expert 调用）：**
+- **必须**从 ARCHITECT.md 第 8 节读取技术栈定义
+- **必须**验证 ARCHITECT 中的技术栈与 package.json 一致
+- **必须**严格遵守约束范围，不得修改约束外的文件
+- **必须**使用 Glob 工具验证文件存在性后再修改
+- **必须**按验收标准完成开发
+- **必须**向 development-lead-expert 报告完成状态和实际修改的文件清单
+- **不得**超出上下文限制范围
+- **不得**擅自更改技术栈或升级依赖版本
+- 遇到技术栈冲突必须及时向 development-lead-expert 报告
 
 ## 技术约束（按栈区分）
 
@@ -116,10 +298,30 @@ description: Use when frontend delivery must follow PRD/DESIGN_SPEC and requires
 
 ## 红旗清单（出现即停止并回到澄清）
 
-- 未核对 PRD/DESIGN_SPEC 就直接编码
+**通用红旗（两种模式）：**
+- 未核对 PRD/DESIGN_SPEC/ARCHITECT 就直接编码
 - 以 Mock/Stub 代替真实依赖
 - 在关键路径引入隐式状态或时间耦合
 - 忽略可访问性与性能基线
+
+**技术相关红旗：**
+- 未确认技术栈就开始编码
+- 使用与框架版本不匹配的 API（如 Vue 3 用 Options API，React 18 用 Class Components）
+- 混用不同框架的写法或概念
+- 随意升级依赖版本
+- TypeScript 项目中使用 `any` 类型
+- 违反对应技术栈的代码规范
+- 引入与项目技术栈不兼容的库
+
+**模式2 特定红旗（被 development-lead-expert 调用）：**
+- 未从 ARCHITECT.md 第 8 节读取技术栈定义
+- 未验证 ARCHITECT 与 package.json 的一致性
+- 未使用 Glob 验证文件存在性就直接修改
+- 修改了约束范围外的文件
+- 未向 development-lead-expert 报告完成状态
+- 未按验收标准完成开发
+- 跳过约束参数直接开发
+- 擅自更改技术栈或依赖版本
 
 ## 示例（节选）
 
