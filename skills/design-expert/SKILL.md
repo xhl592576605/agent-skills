@@ -12,6 +12,7 @@ description: Use when a user requests UI/UX design expertise, design research, o
 **开始前必须向用户提问并等待回答：本次功能/模块名称是什么？(可根据前文的上下文确定)**
 **必须确认：目标平台（Web/移动/桌面）与设计偏好（风格/品牌/竞品参考）。**
 **执行技能时必须使用"supsuperpowers:brainstorm"进行追问更多相关点，直到完全理解需求。（如果没有“supsuperpowers:brainstorm”，则必须使用AskUserQuestion工具等方式追问更多相关点，直到完全理解需求。）**
+**执行技能时可以使用"ui-ux-pro-max"技能（如果有的话）进行更详细的设计调研与分析。辅助"design-expert"生成更完善的设计规范。**
 ## 【核心能力】
 
 - **需求解读**：从PRD提炼目标、用户、核心场景与成功指标
