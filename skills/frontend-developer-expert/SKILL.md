@@ -105,6 +105,117 @@ description: Use when frontend delivery must follow PRD/DESIGN_SPEC/ARCHITECT an
 | React 项目 | React 技术约束 |
 | TypeScript 项目 | 额外遵守 TS 类型约束（不得使用 any） |
 
+## 【代码模式查找与匹配】
+
+**核心原则：编写代码前，必须先查找项目中现有的代码模式，确保新代码与项目现有风格一致。**
+
+### 为什么需要代码模式查找
+
+- **AI 理解可能过时**：AI 训练数据中的代码模式可能不适用于当前项目
+- **项目特定风格**：每个项目可能有特定的代码风格和组织结构
+- **保持一致性**：确保新代码与现有代码保持一致性和可维护性
+
+### 代码查找优先级
+
+| 优先级 | 方法 | 适用场景 | 工具 |
+|--------|------|----------|------|
+| **1** | **查找项目现有模式** | 确保与项目风格一致 | Grep, Glob, Read |
+| **2** | **context7 MCP 查询最新文档** | 项目无相关代码或代码过时 | mcp__context7__query-docs |
+| **3** | 直接读取 | 已知文件路径 | Read |
+| **4** | **询问用户** | 前三者都无法确定时 | AskUserQuestion |
+
+### 代码查找流程
+
+**第一步：识别需要编写的代码类型**
+- 组件写法、状态管理、API 调用、样式定义、路由配置等
+
+**第二步：在项目中查找类似实现**
+```
+# 示例搜索命令
+- 组件结构: Grep("export default function|export const Component", "*.tsx|*.vue")
+- 状态管理: Grep("useState|useEffect|defineComponent|ref|reactive", "*.{tsx,ts,vue}")
+- API 调用: Grep("axios|fetch|api", "*.ts|*.tsx")
+- 样式定义: Grep("styled|className|css", "*.tsx|*.vue")
+- 路由配置: Grep("Route|router|createBrowserRouter", "*.tsx")
+```
+
+**第三步：分析现有代码模式**
+- **组件结构**：函数组件/类组件、组合式 API/选项式 API
+- **导入方式**：相对路径/绝对路径、命名导入/默认导入
+- **命名规范**：文件命名、变量命名、组件命名
+- **状态管理**：Hooks/Redux/Vuex/Pinia 使用方式
+- **错误处理**：try-catch/async-await/错误边界
+- **样式定义**：CSS Modules/Styled Components/Tailwind/SCSS
+- **文件组织**：目录结构、文件分组方式
+
+**第四步：如果没有找到或项目代码过时**
+- 使用 `mcp__context7__resolve-library-id` 解析库 ID
+- 使用 `mcp__context7__query-docs` 查询最新文档
+- 获取框架/库的最佳实践和推荐写法
+- 确认使用的 API 版本是否当前项目技术栈支持
+
+**第五步：按照确定的模式编写代码**
+- 遵循项目现有风格或最新最佳实践
+- 保持代码格式一致（缩进、引号、换行等）
+- 使用项目中已有的配置和工具
+
+### 前端特定代码模式示例
+
+**React 项目**
+```
+查找内容：
+- 组件定义: Grep("function.*Component|export function|export const", "*.tsx")
+- Hooks 使用: Grep("useState|useEffect|useCallback", "*.tsx")
+- 样式方案: Grep("styled|className.*css|@emotion", "*.tsx")
+- API 调用: Grep("await.*api|axios\\.get|fetch\\(", "*.tsx")
+```
+
+**Vue 项目**
+```
+查找内容：
+- 组件定义: Grep("defineComponent|export default|<script setup", "*.vue")
+- 响应式: Grep("ref|reactive|computed|watch", "*.vue")
+- 状态管理: Grep("pinia|vuex|useState|useStore", "*.vue")
+- 路由: Grep("useRoute|useRouter|router-", "*.vue")
+```
+
+### 示例场景
+
+**场景：需要编写一个 React 登录组件**
+
+```
+查找步骤：
+1. Grep("Login|login|SignIn", "*.tsx") → 查找现有登录相关组件
+2. Read("src/components/Login/index.tsx") → 分析组件结构
+3. 发现项目使用：
+   - 函数组件 + Hooks (useState, useEffect)
+   - Ant Design 组件库
+   - Form.useForm 管理表单状态
+   - 样式使用 CSS Modules
+   - API 调用使用 src/services/api.ts
+4. 按照相同模式编写新登录组件
+```
+
+**场景：需要编写 Vue3 组件但项目没有类似组件**
+
+```
+查找步骤：
+1. Grep("defineComponent|ref|reactive", "*.vue") → 查找现有组件
+2. 如果没有找到或代码较少
+3. mcp__context7__resolve-library-id("vue")
+4. mcp__context7__query-docs("/vue", "Composition API best practices")
+5. 按照最新文档推荐的写法编写组件
+```
+
+### 注意事项
+
+- **不得**基于 AI 可能过时的理解直接编写代码
+- **必须**先查找项目中至少 1-2 个类似实现作为参考
+- **必须**确认使用的 API 与项目技术栈版本匹配
+- **必须**保持新代码与项目现有代码风格一致
+- 如果项目中代码明显过时，**应该**向用户建议更新
+- **仅在无法通过查找确定时**才询问用户
+
 ## 【约束接收机制】（仅模式2）
 
 当被 development-lead-expert 调用时，会接收以下约束参数：

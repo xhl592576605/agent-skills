@@ -115,6 +115,371 @@ dependencies:
 | iOS 原生 | iOS 技术约束 |
 | Android 原生 | Android 技术约束 |
 
+## 【代码模式查找与匹配】
+
+在编写跨平台代码之前，必须先在项目中查找现有代码模式，确保新代码与项目风格一致。**不得依赖 AI 可能过时的理解直接编写代码。**
+
+### 代码查找优先级
+
+| 优先级 | 方法 | 适用场景 | 工具 |
+|--------|------|----------|------|
+| **1** | **查找项目现有模式** | 确保与项目风格一致 | Grep, Glob, Read |
+| **2** | **context7 MCP 查询最新文档** | 项目无相关代码或代码过时 | mcp__context7__query-docs |
+| **3** | 直接读取 | 已知文件路径 | Read |
+| **4** | **询问用户** | 前三者都无法确定时 | AskUserQuestion |
+
+### 跨平台代码查找流程
+
+**第一步：明确需要实现的功能**
+- 确认是跨平台共享层还是平台特定层
+- 识别是 UI 组件、状态管理、还是原生能力调用
+- 明确所属技术栈（Flutter/React Native/iOS/Android）
+
+**第二步：在项目中查找类似实现**
+
+```bash
+# Flutter 项目 - 查找组件模式
+Grep("class.*Widget extends", "lib/**/*.dart")
+Grep("class.*Page extends", "lib/**/*.dart")
+Grep("class.*Screen extends", "lib/**/*.dart")
+
+# Flutter - 状态管理模式
+Grep("Riverpod|ConsumerWidget|Provider|Bloc", "lib/**/*.dart")
+
+# React Native 项目 - 查找组件模式
+Grep("export default function|export const Component", "**/*.{tsx,ts}")
+Grep("useState|useEffect|useCallback", "**/*.{tsx,ts}")
+
+# iOS - 查找视图控制器模式
+Grep("class.*ViewController: UIViewController", "ios/**/*.{swift,m}")
+Grep("struct.*View: View", "ios/**/*.swift")
+
+# Android - 查找 Activity/Fragment 模式
+Grep("class.*Activity: AppCompatActivity", "app/**/*.{kt,java}")
+Grep("class.*Fragment: Fragment", "app/**/*.{kt,java}")
+```
+
+**第三步：分析找到的代码模式**
+- 提取项目特定的代码结构和命名规范
+- 识别状态管理方案的实现方式
+- 观察错误处理和边界情况的处理模式
+- 记录平台差异的处理方式（如条件编译、平台通道等）
+
+**第四步：如果没有找到或项目代码过时**
+- 使用 `mcp__context7__resolve-library-id` 解析库 ID（如 `/flutter/flutter`、`/facebook/react-native`）
+- 使用 `mcp__context7__query-docs` 查询最新文档和最佳实践
+- 结合项目现有模式，选择最合适的实现方式
+
+**第五步：按项目模式编写代码**
+- 遵循项目现有的命名规范和代码结构
+- 使用项目中已选定的状态管理和依赖注入方式
+- 保持与项目一致的错误处理和日志记录模式
+- 确保平台差异处理方式与项目其他部分一致
+
+### 跨平台特定代码模式示例
+
+#### Flutter 项目代码模式
+
+**页面组件结构：**
+```dart
+// 查找关键词：class.*Page extends ConsumerStatefulWidget
+class LoginPage extends ConsumerStatefulWidget {
+  const LoginPage({super.key});
+
+  @override
+  ConsumerState<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends ConsumerState<LoginPage> {
+  // 状态定义
+  final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('登录')),
+      body: // ...
+    );
+  }
+}
+```
+
+**平台通道模式：**
+```dart
+// 查找关键词：static const MethodChannel
+class PlatformService {
+  static const platform = MethodChannel('com.example.app/platform');
+
+  Future<String> getPlatformVersion() async {
+    try {
+      final String version = await platform.invokeMethod('getPlatformVersion');
+      return version;
+    } on PlatformException catch (e) {
+      return "Failed to get platform version: '${e.message}'.";
+    }
+  }
+}
+```
+
+#### React Native 项目代码模式
+
+**函数组件结构：**
+```typescript
+// 查找关键词：export default function|FC<Props>
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+
+interface LoginProps {
+  onLoginSuccess: () => void;
+}
+
+export const LoginScreen: React.FC<LoginProps> = ({ onLoginSuccess }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  // ...
+
+  return (
+    <View style={styles.container}>
+      <Text>登录</Text>
+      {/* ... */}
+    </View>
+  );
+};
+```
+
+**原生模块模式：**
+```typescript
+// 查找关键词：NativeModules
+import { NativeModules, Platform } from 'react-native';
+
+const { PlatformService } = NativeModules;
+
+export const getPlatformVersion = async () => {
+  try {
+    const version = await PlatformService.getPlatformVersion();
+    return version;
+  } catch (error) {
+    console.error('Failed to get platform version:', error);
+    return null;
+  }
+};
+```
+
+#### iOS 原生代码模式
+
+**SwiftUI 视图结构：**
+```swift
+// 查找关键词：struct.*View: View
+import SwiftUI
+
+struct LoginView: View {
+    @State private var email: String = ""
+    @State private var password: String = ""
+
+    var body: some View {
+        VStack {
+            Text("登录")
+            // ...
+        }
+    }
+}
+```
+
+**UIKit 视图控制器：**
+```swift
+// 查找关键词：class.*ViewController: UIViewController
+import UIKit
+
+class LoginViewController: UIViewController {
+    private let emailTextField = UITextField()
+    private let passwordTextField = UITextField()
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        setupUI()
+    }
+
+    private func setupUI() {
+        // UI 设置
+    }
+}
+```
+
+#### Android 原生代码模式
+
+**Compose UI 结构：**
+```kotlin
+// 查找关键词：@Composable fun
+@Composable
+fun LoginScreen(
+    onLoginSuccess: () -> Unit
+) {
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+
+    Column(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Text(text = "登录")
+        // ...
+    }
+}
+```
+
+**传统 View 体系 Activity：**
+```kotlin
+// 查找关键词：class.*Activity: AppCompatActivity
+class LoginActivity : AppCompatActivity() {
+    private lateinit var binding: ActivityLoginBinding
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        binding = ActivityLoginBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+        setupUI()
+    }
+
+    private fun setupUI() {
+        // UI 设置
+    }
+}
+```
+
+### 示例场景
+
+#### 场景1：Flutter 项目实现新的设置页面
+
+**查找步骤：**
+1. 搜索 `Grep("class.*Page extends", "lib/pages/**/*.dart")` 找到现有页面模式
+2. 发现项目使用 `ConsumerStatefulWidget` + Riverpod
+3. 搜索 `Grep("SettingsPage|SettingsScreen", "lib/**/*.dart")` 查看是否有设置相关代码
+
+**找到的模式：**
+```dart
+class SettingsPage extends ConsumerStatefulWidget {
+  const SettingsPage({super.key});
+  @override
+  ConsumerState<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends ConsumerState<SettingsPage> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('设置')),
+      body: ListView(
+        children: [
+          SwitchListTile(
+            title: Text('深色模式'),
+            value: ref.watch(darkModeProvider),
+            onChanged: (value) => ref.read(darkModeProvider.notifier).toggle(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+```
+
+**按模式编写新代码：**
+```dart
+class NotificationSettingsPage extends ConsumerStatefulWidget {
+  const NotificationSettingsPage({super.key});
+  @override
+  ConsumerState<NotificationSettingsPage> createState() => _NotificationSettingsPageState();
+}
+
+class _NotificationSettingsPageState extends ConsumerState<NotificationSettingsPage> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('通知设置')),
+      body: ListView(
+        children: [
+          SwitchListTile(
+            title: Text('推送通知'),
+            value: ref.watch(pushNotificationProvider),
+            onChanged: (value) => ref.read(pushNotificationProvider.notifier).toggle(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+```
+
+#### 场景2：React Native 项目调用新的原生能力
+
+**查找步骤：**
+1. 搜索 `Grep("NativeModules|createNativeModule", "**/*.{ts,tsx}")` 找到原生模块调用模式
+2. 发现项目有 `PlatformService` 原生模块
+3. 查看 `ios/` 和 `android/` 目录下对应的原生实现
+
+**找到的模式（TypeScript）：**
+```typescript
+import { NativeModules } from 'react-native';
+
+const { PlatformService } = NativeModules;
+
+export const getDeviceInfo = async () => {
+  return await PlatformService.getDeviceInfo();
+};
+```
+
+**按模式添加新方法：**
+```typescript
+// 先添加到现有 PlatformService 调用
+export const getAppVersion = async () => {
+  try {
+    return await PlatformService.getAppVersion();
+  } catch (error) {
+    console.error('Failed to get app version:', error);
+    return null;
+  }
+};
+```
+
+**对应的 iOS 原生实现：**
+```swift
+// 查找现有 PlatformService.swift
+// 添加新方法
+@objc public func getAppVersion(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+    if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
+        resolve(version)
+    } else {
+        reject("VERSION_ERROR", "Unable to get app version", nil)
+    }
+}
+```
+
+**对应的 Android 原生实现：**
+```kotlin
+// 查找现有 PlatformServiceModule.kt
+// 添加新方法
+@ReactMethod
+public fun getAppVersion(promise: Promise) {
+    try {
+        val packageInfo = reactApplicationContext.packageManager.getPackageInfo(reactApplicationContext.packageName, 0)
+        promise.resolve(packageInfo.versionName)
+    } catch (e: Exception) {
+        promise.reject("VERSION_ERROR", "Unable to get app version", e)
+    }
+}
+```
+
+### 注意事项
+
+- **不得**依赖 AI 可能过时的理解直接编写跨平台代码
+- **必须**优先查找项目现有模式，确保代码风格一致
+- **必须**在编写代码前确认项目使用的技术栈版本（Flutter 2.x vs 3.x，RN 0.6x vs 0.7x）
+- **必须**查询最新文档（context7 MCP）当项目代码可能过时或使用已废弃 API 时
+- **必须**保持跨平台共享代码与平台特定代码的边界清晰
+- **不得**在共享层混入平台特定逻辑，必须通过平台通道或条件编译处理
+- **必须**确保新代码的性能表现符合项目基线（启动时间、渲染帧率等）
+
 ## 【约束接收机制】（仅模式2）
 
 当被 development-lead-expert 调用时，会接收以下约束参数：
