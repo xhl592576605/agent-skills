@@ -9,7 +9,6 @@ description: Use when a user requests architecture design based on PRD/DESIGN_SP
 
 将 PRD 与 DESIGN_SPEC 转化为可落地的系统架构方案，输出面向每个功能点/页面的详细 ARCHITECT 文档，并给出面向角色的开发分工与里程碑建议。
 
-**开始前必须向用户提问并等待回答：功能/模块名称是什么？(可根据前文的上下文确定)**
 **执行根据功能/模块名称，确认：PRD 与 DESIGN_SPEC 的路径是否存在且内容已准备好。**
 **执行技能时必须使用"supsuperpowers:brainstorm"进行追问更多相关点，直到完全理解需求与设计细节。。（如果没有“supsuperpowers:brainstorm”，则必须使用AskUserQuestion工具等方式追问更多相关点，直到完全理解需求与设计细节。。）**
 **必须识别关键功能点，并为其指派对应专家技能协作完成（前端 / 后端 / 多平台）。**

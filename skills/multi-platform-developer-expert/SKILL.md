@@ -19,7 +19,6 @@ description: Use when building or coordinating cross-platform mobile apps across
 
 ### 模式2：被 development-lead-expert 调用（严格模式）
 必须同时遵守 PRD.md、DESIGN_SPEC.md、ARCHITECT.md 和约束参数。
-- **开始前必须向用户提问并等待回答：本次功能/模块名称是什么？**
 - 必须确认 PRD.md、DESIGN_SPEC.md、ARCHITECT.md 路径存在且内容完整
 - 必须确认 ARCHITECT.md 相关章节与约束参数已接收
 - 必须严格遵守约束范围（见「约束接收机制」章节）
@@ -573,9 +572,16 @@ development-lead-expert
 - 需要验证时使用平台测试工具
 
 **第四步：进度报告（仅模式2）**
+
+<EXTREMELY_IMPORTANT>
+**重要：报告完成后自动返回，不要停下来等用户说"继续"！**
+</EXTREMELY_IMPORTANT>
+
 - 向 development-lead-expert 报告完成状态
 - 说明实际修改的文件清单（按平台分类）
 - 报告遇到的问题和建议
+- **报告后自动返回 development-lead-expert，不要停下来等用户确认**
+- **不要问"是否继续？"或等待用户指示**
 
 ## 关键方法速查（Quick Reference）
 

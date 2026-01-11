@@ -19,7 +19,6 @@ description: Use when creating, optimizing, or refining prompts for AI interacti
 
 ### 模式2：被 development-lead-expert 调用（严格模式）
 必须遵守 ARCHITECT.md 和约束参数，为技能文档或 Agent 系统构建提示词。
-- **开始前必须向用户提问并等待回答：本次提示词的目标和使用场景是什么？**
 - 必须确认 ARCHITECT.md 路径存在且内容完整
 - 必须确认约束参数已接收
 - 必须严格遵守约束范围（见「约束接收机制」章节）
